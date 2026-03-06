@@ -143,8 +143,7 @@ test.describe('Validate lingo functionality', () => {
       const languageItems = await lingo.languageList.allTextContents();
       console.log('Extracted Language Items:', languageItems);
       expect(languageItems).toEqual(expected_Languages);
-    });
-  });
+    });  });
 
   test(`${features[7].name},${features[7].tags} [TC-${features[7].tcid}]`, async ({ page, baseURL }) => {
     console.info(`[Test Page]: ${baseURL}${features[7].path}`);
@@ -914,4 +913,17 @@ test.describe('Validate lingo functionality', () => {
       }).toPass();
     });
   });
+
+  
+// Run testa for Language Selector Search:
+
+test.describe('Search Validation Tests', () => {
+
+  features.forEach((props) => {
+    test(`${props.name} ${props.tags} [TC-${props.tcid}]`, async ({ page, baseURL }) => {
+      await page.goto(`${baseURL}${props.path}`);
+        await lingo.validateRegionSearchScenariosLingo(props);
+       });
+     });
+   });
 });
