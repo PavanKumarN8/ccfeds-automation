@@ -61,11 +61,8 @@ jobs:
 
               if (raw) {
                 const results = JSON.parse(raw);
-
                 const suites = Array.isArray(results.suites) ? results.suites : [];
-                const allSpecs = suites.flatMap(s =>
-                  Array.isArray(s.specs) ? s.specs : []
-                );
+                const allSpecs = suites.flatMap(s => Array.isArray(s.specs) ? s.specs : []);
 
                 passed = allSpecs.filter(s => s.status === 'passed').length;
                 failed = allSpecs.filter(s => s.status === 'failed').length;
@@ -85,15 +82,41 @@ jobs:
 
       - name: Send Slack Notification
         if: always()
-        uses: rtCamp/action-slack-notify@v2
+        uses: slackapi/slack-github-action@v1.27.0
         with:
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          message: |
-            🤖 *Daily Playwright E2E Report*
-            Branch: `${{ github.ref_name }}`
-            OS: `${{ matrix.os }}`
-            ✔️ Passed: *${{ steps.summary.outputs.passed }}*
-            ❌ Failed: *${{ steps.summary.outputs.failed }}*
-            ⏭️ Skipped: *${{ steps.summary.outputs.skipped }}*
-            📦 HTML report: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          color: ${{ steps.summary.outputs.failed != '0' && 'danger' || 'good' }}
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "${{ steps.summary.outputs.failed != '0' && '#ff0000' || '#36a64f' }}",
+                  "blocks": [
+                    {
+                      "type": "header",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "🤖 Daily Playwright E2E Report"
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        { "type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}" },
+                        { "type": "mrkdwn", "text": "*OS:*\n${{ matrix.os }}" },
+                        { "type": "mrkdwn", "text": "*✔️ Passed:*\n${{ steps.summary.outputs.passed }}" },
+                        { "type": "mrkdwn", "text": "*❌ Failed:*\n${{ steps.summary.outputs.failed }}" },
+                        { "type": "mrkdwn", "text": "*⏭️ Skipped:*\n${{ steps.summary.outputs.skipped }}" }
+                      ]
+                    },
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "📦 *<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report>*"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
